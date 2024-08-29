@@ -1,0 +1,64 @@
+# version: '3.8'
+
+networks:
+    yonmanet:
+
+services:
+
+  # Web Server Service
+  nginx_ym:
+    image: nginx:alpine
+    container_name: lanranginx
+    ports:
+      - "8800:80"
+    volumes:
+      - ./src:/var/www
+      - ./nginx/conf.d/:/etc/nginx/conf.d/
+    depends_on:
+      - app_ym
+      - db_ym
+    networks:
+      - yonmanet
+
+  #Database Service
+  db_ym:
+    image : mariadb
+    container_name: laradbms
+    volumes:
+      - ./mysql/data:/var/lib/mysql
+    ports:
+      - "3336:3306"
+    environment:
+      MYSQL_DATABASE: yonmaprod
+      MYSQL_ROOT_PASSWORD: 'YonmaR00t#'
+      MYSQL_USER: yonmauser
+      MYSQL_PASSWORD: 'YonmaU53r#'
+    networks:
+      - yonmanet
+
+  # Application Service
+  app_ym:
+    container_name: laravels
+    build:
+      context: ./php
+      dockerfile: Dockerfile
+    volumes:
+      - ./src:/var/www
+    ports:
+      - "9000:9000"
+    working_dir: /var/www
+    networks:
+      - yonmanet
+
+  #phpMyAdmin Service
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: dbadmin_ym
+    environment:
+      PMA_HOST: db_ym
+    ports:
+      - "8600:80"
+    depends_on:
+      - db_ym
+    networks:
+      - yonmanet
